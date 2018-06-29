@@ -1,0 +1,194 @@
+#define MAX_LIFE 100
+#define MAX_FUEL 1500
+#define MAX_THRUST 7000
+#define MIN_THRUST 0
+#define PI 3.14159265359
+
+struct GameObject {
+	float x, y;
+	int	w, h;
+	float vx, vy;
+	float life;
+	float fuel;
+};
+
+DWORD WIDTH = GetSystemMetrics(SM_CXSCREEN) * 0.999;
+DWORD HEIGHT = GetSystemMetrics(SM_CYSCREEN) * 0.92;
+
+int score = 0;
+int asteroidW = 25, asteroidH = 25;
+int playerW = 50, playerH = 50;
+int bulletW = 50, bulletH = 10;
+int thrusterW = 10, thrusterH = 25;
+int blastW = 75, blastH = 75;
+int stationW = 400, stationH = 300;
+int responceMountain = -1, responceSpace = -1;
+
+const int noOfAsteroids = 10, noOfPlayers = 1, noOfBullets = 10;
+GameObject asteroidArr[noOfAsteroids];
+GameObject player, fuelStation;
+GameObject *bulletArr = (GameObject*)malloc(noOfBullets * sizeof(GameObject));
+
+int randomInt(int a, int b);
+void initObjectArr(GameObject *arr, int size, int imgW, int imgH);
+void initObject(GameObject *arr, float x, float y, int imgW, int imgH, float vx, float vy, float fuel);
+void showObjectArr(GameObject *arr, int size);
+void showObject(GameObject *arr);
+void drawObjectArr(GameObject *arr, int size, void *imagePtr, int life);
+void drawObject(GameObject *arr, void *imagePtr, int life, int fuel);
+void checkObjectOutArr(GameObject *arr, int size);
+void checkObjectOut(GameObject *arr);
+void moveObjectArr(GameObject *arr, int size);
+void moveObject(GameObject *arr, float dx, float dy);
+int checkObjectCollision(GameObject *arr, int size, GameObject *obj);
+void initBulletArr(GameObject *blt, int size, int  x, int y, int w, int h, int vx, int vy);
+void shiftRight(GameObject *blt, int currBlts);
+void checkBulletOutArr(GameObject *blt, int &currBlts);
+int  checkBulletCollision(GameObject *arr, int sizeArr, GameObject *blt, int sizeBlt, void *blast);
+
+void printPage() {
+	printf("getvisualpage -> %d\n", getvisualpage());
+	printf("getactivepage -> %d\n", getactivepage());
+}
+
+int randomInt(int a, int b){
+	return a + rand()%(b-a+1);
+}
+
+void initObjectArr(GameObject *arr, int size, int imgW, int imgH){
+	for(int i = 0; i < size; i++){
+//		initObject(&arr[i], randomInt(WIDTH / 2, 3 * WIDTH / 2), randomInt(0, HEIGHT), imgW, imgH, randomInt(-10, -5), randomInt(-1, 1), 0);
+		initObject(&arr[i], randomInt(WIDTH, 2 * WIDTH), randomInt(0, HEIGHT), imgW, imgH, randomInt(-10, -5), randomInt(-1, 1), 0);
+	}
+}
+
+void initObject(GameObject *arr, float x, float y, int w, int h, float vx, float vy, float fuel){
+	arr->x = x;
+	arr->y = y;
+	arr->w = w;
+	arr->h = h;
+	arr->vx = vx;
+	arr->vy = vy;
+	arr->life = MAX_LIFE;
+	arr->fuel = fuel;
+}
+
+void showObjectArr(GameObject *arr, int size){
+	for(int i = 0; i < size; i++){
+		showObject(&arr[i]);
+	}
+}
+
+void showObject(GameObject *arr){
+	printf("x -> %f,\t", arr->x);
+	printf("y -> %f,\t", arr->y);
+	printf("w -> %d,\t", arr->w);
+	printf("h -> %d,\t", arr->h);
+	printf("vx -> %f,\t", arr->vx);
+	printf("vy -> %f,\n", arr->vy);
+}
+
+void drawObjectArr(GameObject *arr, int size, void *imagePtr, int life){
+	for(int i = 0; i < size; i++){
+//		printf("i -> %d\n", i);
+		drawObject(&arr[i], imagePtr, life, 0);
+	}
+}
+
+void drawObject(GameObject *arr, void *imagePtr, int life, int fuel){
+	float fraction = arr->life / MAX_LIFE;
+	setfillstyle(SOLID_FILL, COLOR(255 * (1 - fraction), 255 * fraction, 0));
+	if (life)bar(arr->x, arr->y - 10, arr->x + fraction * arr->w, arr->y - 5);
+	fraction = arr->fuel / MAX_FUEL;
+	setfillstyle(SOLID_FILL, COLOR(255 * (1 - fraction), 255 * fraction, 0));
+	if (fuel)bar(arr->x, arr->y - 15, arr->x + fraction * arr->w, arr->y - 10);
+	putimage(arr->x, arr->y, imagePtr, COPY_PUT);
+}
+
+void checkObjectOutArr(GameObject *arr, int size){
+	for(int i = 0; i < size; i++){
+		checkObjectOut(&arr[i]);
+	}
+}
+
+void checkObjectOut(GameObject *arr){
+	if((int)(arr->x + arr->w) <= 0 || (int)(arr->y + arr->w) <= 0 || (int)arr->y >= (int)HEIGHT){
+		arr->x = randomInt(WIDTH, 2 * WIDTH);
+		arr->y = randomInt(0, HEIGHT);
+		arr->vx = randomInt(-10, -5);
+		arr->vy = randomInt(-1, 1);
+	}else if(arr->life <= 0){
+		arr->x = randomInt(WIDTH, WIDTH*2);
+		arr->y = randomInt(0, HEIGHT);
+		arr->life = MAX_LIFE;
+	}
+}
+
+int checkObjectCollision(GameObject *arr, int size, GameObject *obj){
+	for(int i = 0; i < size; i++){
+		if(obj->x+obj->w >= arr[i].x && obj->x <= arr[i].x+arr[i].w){
+			if(obj->y+obj->h >= arr[i].y && obj->y <= arr[i].y+arr[i].h){
+				arr[i].life -= 100;
+				obj->life -= 10;
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
+void moveObjectArr(GameObject *arr, int size){
+	for(int i = 0; i < size; i++){
+		moveObject(&arr[i], arr[i].vx, arr[i].vy);
+	}
+}
+
+void moveObject(GameObject *arr, float dx, float dy){
+	arr->x += dx;
+	arr->y += dy;
+}
+
+//Special functions for Bullets functionality
+void initBulletArr(GameObject *blt, int size, int  x, int y, int w, int h, int vx, int vy){
+	for(int i = 0; i < size; i++){
+		initObject(&blt[i], x, y, w, h, vx, vy, 0);
+	}
+}
+
+void shiftRight(GameObject *blt, int currBlts){
+	GameObject last = blt[currBlts-1];
+	for(int i = currBlts-2; i >= 0; i--){
+		blt[i+1] = blt[i];
+	}
+	blt[0] = last;
+}
+
+void checkBulletOutArr(GameObject *blt, int &currBlts){
+	for(int i = 0; i < currBlts; i++){
+		if(blt[i].x > WIDTH || blt[i].life <= 0){
+			initObject(&blt[i], 0, 0, 0, 0, 0, 0, 0);
+			currBlts--;
+		}
+	}
+}
+
+int  checkBulletCollision(GameObject *arr, int sizeArr, GameObject *blt, int sizeBlt, void *blast){
+	for(int i = 0; i < sizeArr; i++){
+		for(int j = 0; j < sizeBlt; j++){
+			if(blt[j].x+blt[j].w >= arr[i].x && blt[j].x <= arr[i].x+arr[i].w){
+				if(blt[j].y+blt[j].h >= arr[i].y && blt[j].y <= arr[i].y+arr[i].h){
+					arr[i].life = 0;
+					blt[j].life = 0;
+					printf("collided\n");
+					putimage(arr[i].x, arr[i].y, blast, COPY_PUT);
+					swapbuffers();
+					cleardevice();
+					delay(10);
+					score+=10;
+					return 1;
+				}
+			}
+		}
+	}
+	return 0;
+}

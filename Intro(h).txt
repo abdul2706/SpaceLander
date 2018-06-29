@@ -1,0 +1,242 @@
+POINT cursor;
+
+int current = 0;
+int i = 0;
+int midX = WIDTH / 2, midY = HEIGHT / 2;
+char scoreStr[50];
+
+int Intro();
+void Loader(int x, int y, int times, int d, IMAGE *img);
+void getCursorPos(POINT *mouse);
+
+int Intro() {
+	//variables for buttons initializing
+	int s = 100, e = s + 200, hb = 100, d = hb + 10, ds = 100, optn = 0;
+	//initializes images array
+	initImages();
+	//load full screen images
+	loadImageArr(0, 4, 0, 0, WIDTH, HEIGHT*0.985);
+	//load cover buttons
+	loadImageArr(5, 12, 0, 0, e - s, hb);
+	//load back buttons
+	loadImageArr(13, 14, 0, 0, (e - s) / 3, hb / 3);
+	//load rest of images e.g. ship image, asteroid image, fuel station image, thrusters image etc.
+	initSpacePart();
+
+	//this loop moves button images at thier required coordinates
+	for (int i = 0; i < 4; i++) {
+		translate(&images[2 * i + 5], s, ds + i * d);
+		translate(&images[2 * i + 6], s, ds + i * d);
+	}
+	//this moves back button images at thier required coordinates
+	translate(&backd, 0, HEIGHT - hb / 2);
+	translate(&backh, 0, HEIGHT - hb / 2);
+
+	/*	putImage(&win, COPY_PUT);
+		settextstyle(4, 0, 7);
+		setbkcolor(COLOR(23, 35, 61));
+		sprintf(scoreStr, "SCORE: %d", score);
+		outtextxy(0.5*(WIDTH - textwidth(scoreStr)), HEIGHT-textheight(scoreStr)-10, scoreStr);
+		swapbuffers();
+		cleardevice();
+		delay(10000);
+		setbkcolor(BLACK);*/
+
+	Animation();
+
+	//loop that runs till game is running
+	while (1) {
+		score = 0;
+		//loop for displaying cover page and buttons
+		while (!optn) {
+			swapbuffers();
+			cleardevice();
+			putImage(&cover, COPY_PUT);
+			getCursorPos(&cursor);
+			//loop that runs for every button
+			for (int i = 5; i < 12; i += 2) {
+				//check if mouse pointer is on ith button
+				if (cursor.x >= images[i].x1 && cursor.x <= images[i].x2 && cursor.y >= images[i].y1 && cursor.y <= images[i].y2) {
+					//if mouse pointer is on ith button then display lighted image of button else display normal image of button
+					putImage(&images[i + 1], COPY_PUT);
+					//check if mouse is clicked
+					if (ismouseclick(WM_LBUTTONDOWN)) {//if(GetAsyncKeyState(VK_LBUTTON)){
+						clearmouseclick(WM_LBUTTONDOWN);
+						//update optn value as follow
+						//1 means start
+						//2 means help
+						//3 means about
+						//4 means quit
+						optn = (i - 5) / 2 + 1;
+						break;
+					}
+				}
+				else {
+					putImage(&images[i], COPY_PUT);
+				}
+			}
+			clearmouseclick(WM_LBUTTONDOWN);
+			delay(10);
+		}
+
+		//Game Start
+		if (optn == 1) {
+			Loader(midX, midY, 2, 0, NULL);
+			printf("%d\n", MountainPhysics());
+			if (responceMountain == 1) {
+				printf("%d\n", SpaceFight());
+				if (responceMountain == 1 && responceSpace == 1) {
+					putImage(&win, COPY_PUT);
+					settextstyle(4, 0, 7);
+					setbkcolor(COLOR(23, 35, 61));
+					sprintf(scoreStr, "SCORE: %d", score);
+					outtextxy(0.5*(WIDTH - textwidth(scoreStr)), HEIGHT - textheight(scoreStr) - 10, scoreStr);
+					swapbuffers();
+					cleardevice();
+					getch();
+					setbkcolor(BLACK);
+				}
+				else {
+					putImage(&lose, COPY_PUT);
+					swapbuffers();
+					cleardevice();
+					getch();
+				}
+			}
+			else {
+				putImage(&lose, COPY_PUT);
+				swapbuffers();
+				cleardevice();
+				getch();
+			}
+		}
+
+		//Help Page
+		if (optn == 2) {
+			Loader(midX, midY, 2, 0, NULL);
+			//loop that runs till back button is pressed
+			while (1) {
+				swapbuffers();
+				cleardevice();
+				putImage(&help, COPY_PUT);
+				getCursorPos(&cursor);
+				//===============back===========
+				//check if mouse is over back button
+				if (cursor.x >= backd.x1 && cursor.x <= backd.x2 && cursor.y >= backd.y1 && cursor.y <= backd.y2) {
+					putImage(&backh, COPY_PUT);
+					//check if button is pressed
+					if (ismouseclick(WM_LBUTTONDOWN)) {
+						clearmouseclick(WM_LBUTTONDOWN);
+						break;
+					}
+				}
+				else {
+					putImage(&backd, COPY_PUT);
+				}
+				clearmouseclick(WM_LBUTTONDOWN);
+				delay(10);
+			}
+		}
+
+		//About Page
+		if (optn == 3) {
+			Loader(midX, midY, 2, 0, NULL);
+			//loop that runs till back button is pressed
+			while (1) {
+				swapbuffers();
+				cleardevice();
+				putImage(&about, COPY_PUT);
+				getCursorPos(&cursor);
+				//===============back===========
+				//check if mouse is over back button
+				if (cursor.x >= backd.x1 && cursor.x <= backd.x2 && cursor.y >= backd.y1 && cursor.y <= backd.y2) {
+					putImage(&backh, COPY_PUT);
+					//check if button is pressed
+					if (ismouseclick(WM_LBUTTONDOWN)) {
+						clearmouseclick(WM_LBUTTONDOWN);
+						break;
+					}
+				}
+				else {
+					putImage(&backd, COPY_PUT);
+				}
+				clearmouseclick(WM_LBUTTONDOWN);
+				delay(10);
+			}
+		}
+
+		//Exit Game
+		if (optn == 4) {
+			Loader(midX, midY, 2, 0, NULL);
+			cleardevice();
+			putImage(&about, COPY_PUT);
+			swapbuffers();
+			delay(1000);
+			break;
+		}
+		optn = 0;
+	}
+	return 0;
+}
+
+void Loader(int x, int y, int times, int d, IMAGE *img) {
+	for (int i = 0, j = 0, t = 1;t <= times;i += 6) {
+		swapbuffers();
+		cleardevice();
+		if (img != NULL) {
+			putimage(0.5 * WIDTH - 0.5 * img->w, 0.3 * HEIGHT - 0.5 * img->h, img->imgPtr, COPY_PUT);
+		}
+
+		if (i >= 0 && i <= 360) {
+			setcolor(WHITE);
+			if (i % 360 == 0) j++;
+			for (int a = 1;a <= 5;a++) {
+				arc(x, y, 90, i + 95, d + 10 + a);
+			}
+			for (int a = 1;a <= 5;a++) {
+				arc(x, y, 0, i + 5, d + 30 + a);
+			}
+			for (int a = 1;a <= 5;a++) {
+				arc(x, y, 40, i + 45, d + 50 + a);
+			}
+			for (int a = 1;a <= 5;a++) {
+				arc(x, y, 60, i + 65, d + 70 + a);
+			}
+			for (int a = 1;a <= 5;a++) {
+				arc(x, y, 180, i + 185, d + 90 + a);
+			}
+			for (int a = 1;a <= 5;a++) {
+				arc(x, y, 270, i + 275, d + 110 + a);
+			}
+		}
+		if (i >= 361 && i <= 720) {
+			setcolor(WHITE);
+			for (int a = 1;a <= 5;a++) {
+				arc(x, y, i + 90, 95 + 720, d + 10 + a);
+			}
+			for (int a = 1;a <= 5;a++) {
+				arc(x, y, i + 0, 5 + 720, d + 30 + a);
+			}
+			for (int a = 1;a <= 5;a++) {
+				arc(x, y, i + 40, 45 + 720, d + 50 + a);
+			}
+			for (int a = 1;a <= 5;a++) {
+				arc(x, y, i + 60, 65 + 720, d + 70 + a);
+			}
+			for (int a = 1;a <= 5;a++) {
+				arc(x, y, i + 180, 185 + 720, d + 90 + a);
+			}
+			for (int a = 1;a <= 5;a++) {
+				arc(x, y, i + 270, 275 + 720, d + 110 + a);
+			}
+		}
+		if (i == 720) { i = 0; t++; }
+	}
+	swapbuffers();
+	cleardevice();
+}
+
+void getCursorPos(POINT *mouse) {
+	mouse->x = mousex();
+	mouse->y = mousey();
+}

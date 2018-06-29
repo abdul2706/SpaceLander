@@ -1,0 +1,124 @@
+void printBezierCurve(POINT2D *points, int totalVerts);
+int sigma(int n);
+
+int Animation() {
+	srand(time(NULL));
+	settextstyle(4, 0, 10);
+
+	int wSpace = textwidth("SPACE"), hSpace = textheight("SPACE");
+	int wLander = textwidth("LANDER"), hLander = textheight("LANDER");
+	wSpace = 0.5 * (WIDTH - wSpace), hSpace = 0.3 * (HEIGHT - hSpace);
+	wLander = 0.5 * (WIDTH - wLander), hLander = 0.5 * (HEIGHT - hLander);
+	printf("wSpace -> %d\thSpace -> %d\nwLander -> %d\thLander -> %d\n", wSpace, hSpace, wLander, hLander);
+
+	char ch = ' ';
+	int count = 0, verts = 10, vertsTotal = sigma(verts), index = verts, k = 0;
+	float t = 0, v = 0.0025;
+
+	int w = 100, h = 100;
+	IMAGE ship;loadImage("images/26.jpg", &ship, 0, 0, w, h);
+	IMAGE thruster;loadImage("images/23.jpg", &thruster, 0, 0, w / 4, h / 2);
+
+	POINT2D mouse;
+	POINT2D *points = (POINT2D*)malloc(vertsTotal * sizeof(POINT2D));
+
+	for (int i = 0; i < verts; i++) {
+		points[i].x = 16 * i * i + 0.25*WIDTH;
+		points[i].y = -100.0*i + 1.00*HEIGHT;
+		points[i].r = 5;
+		points[i].clicked = 0;
+	}
+	int xp = points[0].x, yp = points[0].y;
+
+	while (1) {
+		swapbuffers();
+		cleardevice();
+
+		if (1.0 / 15.0 < t && t <= 2.0 / 15.0) { outtextxy(wSpace, hSpace, "S"); }
+		else if (2.0 / 15.0 < t && t <= 3.0 / 15.0) { outtextxy(wSpace, hSpace, "SP"); }
+		else if (3.0 / 15.0 < t && t <= 4.0 / 15.0) { outtextxy(wSpace, hSpace, "SPA"); }
+		else if (4.0 / 15.0 < t && t <= 5.0 / 15.0) { outtextxy(wSpace, hSpace, "SPAC"); }
+		else if (5.0 / 15.0 < t && t <= 6.0 / 15.0) { outtextxy(wSpace, hSpace, "SPACE"); }
+		else if (6.0 / 15.0 < t && t <= 7.0 / 15.0) { outtextxy(wSpace, hSpace, "SPACE");outtextxy(wLander, hLander, "L"); }
+		else if (7.0 / 15.0 < t && t <= 8.0 / 15.0) { outtextxy(wSpace, hSpace, "SPACE");outtextxy(wLander, hLander, "LA"); }
+		else if (8.0 / 15.0 < t && t <= 9.0 / 15.0) { outtextxy(wSpace, hSpace, "SPACE");outtextxy(wLander, hLander, "LAN"); }
+		else if (9.0 / 15.0 < t && t <= 10.0 / 15.0) { outtextxy(wSpace, hSpace, "SPACE");outtextxy(wLander, hLander, "LAND"); }
+		else if (10.0 / 15.0 < t && t <= 11.0 / 15.0) { outtextxy(wSpace, hSpace, "SPACE");outtextxy(wLander, hLander, "LANDE"); }
+		else if (11.0 / 15.0 <= t) { outtextxy(wSpace, hSpace, "SPACE");outtextxy(wLander, hLander, "LANDER"); }
+
+		putimage(points[vertsTotal - 1].x + w - w/4, points[vertsTotal - 1].y + h, thruster.imgPtr, XOR_PUT);
+		putimage(points[vertsTotal - 1].x, points[vertsTotal - 1].y + h, thruster.imgPtr, XOR_PUT);
+		putimage(points[vertsTotal - 1].x, points[vertsTotal - 1].y, ship.imgPtr, XOR_PUT);
+
+		//mouse down
+		if (ismouseclick(WM_LBUTTONDOWN)) {
+			mouse.init(mousex(), mousey(), 5);
+			for (int i = 0; i < verts; i++) {
+				if (points[i].within(mouse) && points[i].clicked == 0) {
+					points[i].clicked = 1;
+				}
+				else {
+					points[i].clicked = 0;
+				}
+			}
+			cleardevice();
+			clearmouseclick(WM_LBUTTONDOWN);
+		}
+
+		//mouse up
+		if (ismouseclick(WM_LBUTTONUP)) {
+			for (int i = 0; i < verts; i++) {
+				points[i].clicked = 0;
+			}
+			clearmouseclick(WM_LBUTTONUP);
+		}
+
+		//mouse move
+		for (int i = 0; i < verts; i++) {
+			if (points[i].clicked) {
+				points[i].x = mousex();
+				points[i].y = mousey();
+			}
+		}
+
+		//update points
+		k = 0;
+		for (int i = 1; i < verts; i++) {
+			for (int j = 0; j < verts - i; j++) {
+				points[index].x = (1 - t)*points[k + j].x + t * points[k + j + 1].x;
+				points[index].y = (1 - t)*points[k + j].y + t * points[k + j + 1].y;
+				points[index].r = 5;
+				points[index].clicked = 0;
+				index++;
+			}
+			k += (verts - i + 1);
+		}
+		index = verts;
+
+		//draw points
+/*		for (int i = 0; i < verts; i++) {
+			points[i].draw();
+		}*/
+
+		count++;
+		t += v;
+		if (t > 1) { printf("count -> %d", count); break; }
+		delay(10);
+	}
+	return 0;
+}
+
+int sigma(int n) {
+	int S = 0;
+	for (int i = 1; i <= n; i++) {
+		S += i;
+	}
+	return S;
+}
+
+void printBezierCurve(POINT2D *points, int totalVerts) {
+	for (int i = 0; i < totalVerts; i++) {
+		printf("%d\n", i);
+		points[i].print();
+	}
+}

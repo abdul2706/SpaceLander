@@ -1,0 +1,252 @@
+#include<iostream>
+#include<conio.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<time.h>
+#include<math.h>
+#include"graphics.h"
+#define hillSize 184
+using namespace std;
+
+struct Line {
+	int x1, y1, x2, y2;
+	void drawLine() {
+		line(x1, y1, x2, y2);
+	}
+};
+
+int random(int, int);
+int* createPlaces(int p);
+void sineHill(int hillArr[184], int altitude);
+//void translate(int *);
+//void dis(int *, int);
+
+int hillSpecialCords[36] = { 0 };
+int theSlps[6] = { 0,2,1,3,1,2 };
+Line lines[9];
+int hc = 0, oldSlp = 0, theBigCounter = 0;
+const int totalVerts = 184 * 6;
+int Mountain[totalVerts] = { 0 };
+int Points[9];
+int indexP = 0;
+
+int hill1[184] = { 0 };
+int hill2[184] = { 0 };
+int hill3[184] = { 0 };
+int hill4[184] = { 0 };
+int hill5[184] = { 0 };
+int hill6[184] = { 0 };
+
+void MountainCollision() {
+	srand(time(NULL));
+
+	setcolor(WHITE);
+	sineHill(hill1, 100 * random(1, 4));
+	sineHill(hill2, 100 * random(1, 4));
+	sineHill(hill3, 100 * random(1, 4));
+	sineHill(hill4, 100 * random(1, 4));
+	sineHill(hill5, 100 * random(1, 4));
+	sineHill(hill6, 100 * random(1, 4));
+
+	swapbuffers();
+	cleardevice();
+
+	for (int i = 0; i < totalVerts; i+=2) {
+		if (0 < i < 184) { Mountain[i] = hill1[i]; Mountain[i + 1] = hill1[i + 1]; }
+		if (184 < i < 2 * 184) { Mountain[i] = hill1[i]; Mountain[i + 1] = hill1[i + 1]; }
+		if (2 * 184 < i < 3 * 184) { Mountain[i] = hill1[i]; Mountain[i + 1] = hill1[i + 1]; }
+		if (3 * 184 < i < 4 * 184) { Mountain[i] = hill1[i]; Mountain[i + 1] = hill1[i + 1]; }
+		if (4 * 184 < i < 5 * 184) { Mountain[i] = hill1[i]; Mountain[i + 1] = hill1[i + 1]; }
+		if (5 * 184 < i < 6 * 184) { Mountain[i] = hill1[i]; Mountain[i + 1] = hill1[i + 1]; }
+	}
+
+	for (int i = 0; i < 36; i += 4) {
+		lines[i / 4].x1 = hillSpecialCords[i];
+		lines[i / 4].y1 = hillSpecialCords[i + 1];
+		lines[i / 4].x2 = hillSpecialCords[i + 2];
+		lines[i / 4].y2 = hillSpecialCords[i + 3];
+		lines[i / 4].drawLine();
+//		printf("x1 -> %d\t\ty1 -> %d\t\tx2 -> %d\t\ty2 -> %d\n", lines[i / 4].x1, lines[i / 4].y1, lines[i / 4].x2, lines[i / 4].y2);
+	}
+	swapbuffers();cleardevice();
+//	delay(10000);
+
+	/*for (int indexx = 0;indexx <= 35;indexx += 4) {
+		cout << "x1-> " << hillSpecialCords[indexx] << " y1-> " << hillSpecialCords[indexx + 1] << " x2-> " << hillSpecialCords[indexx + 2] << " y2-> " << hillSpecialCords[indexx + 3] << endl;
+		setcolor(GREEN);
+		line(hillSpecialCords[indexx], 0, hillSpecialCords[indexx], hillSpecialCords[indexx + 1]);
+	}
+	swapbuffers();
+	cleardevice();
+	getch();*/
+
+	/*
+	setcolor(COLOR(73,56,41));
+	setfillstyle(1,COLOR(73,56,41));
+	fillpoly(hillSize/2,hill1);
+	fillpoly(hillSize/2,hill2);
+	fillpoly(hillSize/2,hill3);
+	fillpoly(hillSize/2,hill4);
+	fillpoly(hillSize/2,hill5);
+	*/
+}
+
+int random(int a, int b) {
+	return a + rand() % (b - a + 1);
+}
+
+int* createPlaces(int p) {
+	int *nArr = (int *)malloc(sizeof(int)*p);
+	int a = 0;
+	int mul = random(10, 20);
+	
+	for (int i = 0;i < p;i++) {
+		a = random(1, 10);
+		if (a*mul >= 180) {
+			a -= random(1, 30);
+		}
+		
+		if (a*mul >= 180) {
+			a -= random(1, 30);
+		}
+		
+		if ((mul*a) % 2 == 0) {
+			nArr[i] = mul*a;
+		}
+		else {
+			nArr[i] = (mul*a) + 1;
+		}
+	}
+	return nArr;
+}
+
+void sineHill(int hillArr[184], int altitude) {
+	static int end = -30, end1 = hillSize;
+	int temp = 0;
+	int slp = 0;
+	//	static int hc = 0, oldSlp = 0, theBigCounter = 0;
+	//	hc = 0, oldSlp = 0, theBigCounter = 0;
+	slp = random(0, 4);
+	slp = theSlps[hc];
+	//-----------------Selecting SLP(ship Landing place)---------------------
+//	cout<<"slp->"<<slp<<endl;
+	int *placeAnglesArr = createPlaces(slp);//landing place's coordinates arr -> placeAnglesArr
+//	for (int i = 0;i < slp;i++) {
+//		cout<< "placeAnglesArr[i] -> " << placeAnglesArr[i] << endl;
+//	}
+//	cout << "slp -> " << slp << endl;
+
+	//----------------------arrays for collision detection---------------------
+	int *specialCord = (int *)malloc(sizeof(int)*(4 * slp));
+	int *specialIndexes = (int *)malloc(sizeof(int)*(slp));
+
+	//-----------------Hills' generation code----------------------------------
+	for (int i = 0, x = end, y, scc = 0, sic = 0; i < hillSize;i += 2, x += 2) {//ssc -> SpecialCord counter; sic -> SPecialIndexes counter
+		y = HEIGHT - altitude*sin(double(i*PI / 180));
+		for (int loopCounter = 0, WidthOfHill = playerW;loopCounter < slp;loopCounter++) {
+			if (i == placeAnglesArr[loopCounter]) {
+				specialIndexes[sic] = i;
+				sic++;
+				temp = random(1, 5);
+				temp *= WidthOfHill;
+				x = x + temp;
+				y = hillArr[i - 1];
+				end += temp;
+				specialCord[scc] = x - temp;
+				specialCord[scc + 1] = y;
+				specialCord[scc + 2] = x;
+				specialCord[scc + 3] = y;
+//				printf("i -> %d\tbigCounter -> %d\n", i, theBigCounter);
+				hillSpecialCords[theBigCounter] = x - temp;
+				hillSpecialCords[theBigCounter + 1] = y;
+				hillSpecialCords[theBigCounter + 2] = x;
+				hillSpecialCords[theBigCounter + 3] = y;
+				scc += 4;theBigCounter += 4;
+
+				//fillellipse(x-(temp/2),y+10,5,5);
+				setcolor(WHITE);
+				if (temp / WidthOfHill == 1) {
+					Points[indexP] = 500;
+					outtextxy(x - (textwidth("500") / 2) - (temp / 2), y + 10, "x5");
+				}
+				else if (temp / WidthOfHill == 2) {
+					Points[indexP] = 400;
+					outtextxy(x - (textwidth("400") / 2) - (temp / 2), y + 10, "x4");
+				}
+				else if (temp / WidthOfHill == 3) {
+					Points[indexP] = 300;
+					outtextxy(x - (textwidth("x3") / 2) - (temp / 2), y + 10, "x3");
+				}
+				else if (temp / WidthOfHill == 4) {
+					Points[indexP] = 200;
+					outtextxy(x - (textwidth("x2") / 2) - (temp / 2), y + 10, "x2");
+				}
+				else if (temp / WidthOfHill == 5) {
+					Points[indexP] = 100;
+					outtextxy(x - (textwidth("x1") / 2) - (temp / 2), y + 10, "x1");
+				}
+				indexP++;
+			}
+		}
+		hillArr[i] = x + random(0, 5);
+		hillArr[i + 1] = y;
+		//		putpixel(i,y,WHITE);
+	}
+	//	setfillstyle(1,COLOR(102,51,0));
+	//	setcolor(COLOR(102,51,0));
+	//	drawpoly(hillSize / 2, hillArr);
+	//	fillpoly(hillSize/2,hillArr);
+	end1 = end + 184;
+	end = end1;
+	hc++;
+	oldSlp += slp;
+//	setcolor(RED);line(end1, 0, end1, HEIGHT);setcolor(WHITE);
+	//	printf("Width of Hill-> %d\n", end1);
+
+/*	for (int i = 0;i < 4 * slp;i += 2) {
+		cout << "x-> " << specialCord[i] << " y-> " << specialCord[i + 1] << endl;
+		setcolor(MAGENTA);line(specialCord[i], 0, specialCord[i], specialCord[i + 1]);
+	}
+	for (int i = 0;i < slp;i += 1) {
+		cout << "SecialIndex[i]-> " << specialIndexes[i] << endl;
+	}*/
+
+	free(specialCord);
+	free(specialIndexes);
+}
+
+/*
+void translate(int transArr[184]){
+for(int i=0;i<184;i+=2){
+transArr[i]-=1;
+}
+}
+void dis(int disArr[184],int widthhh){
+for(int i=0;i<184;i+=2){
+disArr[i]+=widthhh;
+}
+}
+*/
+
+/*
+if(hc == 1){
+hw1 = end;
+hw1c=hw1;
+printf("Width of Hill1-> %d\n",hw1);
+hc++;
+}else if(hc == 2){
+hw2 = end;
+hw2c=hw2;
+printf("Width of Hill2-> %d\n",hw2);
+hc++;
+}
+*/
+
+/*
+//-----------------2d dynamic array[]-------------
+int N =3,M= 4;
+// dynamic allocation
+int** ary = new int*[N];
+for(int i = 0; i < N; ++i)
+ary[i] = new int[M];
+*/

@@ -1,0 +1,152 @@
+/*
+MISSION: Survive till WIN CASE is reached
+WIN CASE: player.x >= fuelStation.x
+if fuel station is on same x-coordinate as player's x-coordinate then player wins game
+LOSE CASE: player.life <= 0
+if life of player is ended then player loses game
+*/
+
+int SpaceFight();
+void initstars();
+void showStars();
+void moveStars();
+
+const int noOfStars = 100;
+int starsArr[2 * noOfStars];
+
+int SpaceFight() {
+	swapbuffers();
+	cleardevice();
+	srand(time(NULL));
+
+	loadImageArr(24, 29, 0, 0, 0.65 * 2 * playerW, 0.65 * 2 * playerH);
+
+	IMAGE &currPlayer = player6;
+	IMAGE &currFire = fireG1;
+	IMAGE &currBlast = blast1;
+
+	initstars();
+	initObjectArr(asteroidArr, noOfAsteroids, asteroidW, asteroidH);
+	initObject(&player, -playerW, HEIGHT / 2 - playerH / 2, playerW, playerH, 3, 0, MAX_FUEL);
+	initObject(&fuelStation, WIDTH, randomInt(0.1*HEIGHT, 0.8*HEIGHT), playerW, playerH, -0.25, 0, 100);
+	initBulletArr(bulletArr, noOfBullets, 0, 0, bulletW, bulletH, 0, 0);
+
+	char ch = ' ', scoreStr[25];
+	int currBlts = 0;
+
+	//game loop that runs till win or loss case
+	while (1) {
+		while (!kbhit()) {
+			swapbuffers();
+			cleardevice();
+
+			//code for stars
+			showStars();
+			moveStars();
+
+			//code for Station
+			drawObject(&fuelStation, spaceFuel.imgPtr, 0, 0);
+			moveObject(&fuelStation, fuelStation.vx, fuelStation.vy);
+//			showObject(&fuelStation);
+
+			//code for GameObject asteroids
+			drawObjectArr(asteroidArr, noOfAsteroids, asteroid.imgPtr, 0);
+			moveObjectArr(asteroidArr, noOfAsteroids);
+			checkObjectOutArr(asteroidArr, noOfAsteroids);
+
+			//code for GameObject player
+			drawObject(&player, currPlayer.imgPtr, 1, 0);
+			putimage(player.x - thrust1.w, player.y + 0.2*player.h, thrust1.imgPtr, COPY_PUT);
+			putimage(player.x - thrust1.w, player.y + 0.8*player.h, thrust1.imgPtr, COPY_PUT);
+			moveObject(&player, player.vx, player.vy);
+			if (checkObjectCollision(asteroidArr, noOfAsteroids, &player)) { printf("collided\n"); delay(25); }
+			if (player.life <= 0) {
+				free(bulletArr);
+				responceSpace = 0;
+				return 0;
+			}
+
+			//code for GameObject bullets
+			if (currBlts != 0) {
+				moveObjectArr(bulletArr, currBlts);
+				drawObjectArr(bulletArr, currBlts, currFire.imgPtr, 0);
+				checkBulletOutArr(bulletArr, currBlts);
+				checkBulletCollision(asteroidArr, noOfAsteroids, bulletArr, currBlts, blast2.imgPtr);
+			}
+
+			//code for limiting player horizontal motion
+			if (player.x > (int)WIDTH*0.1)player.vx = 0;
+			//code for limiting player vertical velocity
+			if (player.vy < -3)player.vy = -3;
+			if (player.vy > 3)player.vy = 3;
+			//code for limiting player vertical motion
+			if (player.y + player.h < 0)player.y = (int)HEIGHT - 1;
+			if (player.y > (int)HEIGHT)player.y = -player.h;
+			//code for checking win case that is if fuel station is on same x-coordinate as players x-coordinate
+			if (player.x >= (fuelStation.x + fuelStation.w / 2)) {
+				free(bulletArr);
+				responceSpace = 1;
+				return 1;
+			}
+
+			//score display
+			setcolor(WHITE);
+			settextstyle(1, 0, 25);
+			sprintf(scoreStr, "Score: %d", score);
+			outtextxy(0, 0, scoreStr);
+			delay(10);
+		}
+
+		//keyboard handling
+		ch = getch();
+		if (ch == 27) { return 0; }
+		else if (ch == 'p') { delay(1000); }
+		else if (ch == 'w') { player.vy -= 0.1; }
+		else if (ch == 's') { player.vy += 0.1; }
+		else if (ch == 32 && currBlts < noOfBullets) {
+			currBlts++;
+			player.x -= 10;
+			player.vx = 3;
+			shiftRight(bulletArr, currBlts);
+			initObject(&bulletArr[0], player.x + player.w, player.y + player.h / 2, bulletW, bulletH, 10, 0, 0);
+		}
+	}
+	free(bulletArr);
+	return 0;
+}
+
+//load images
+void initSpacePart() {
+	loadImageArr(15, 22, 0, 0, bulletW, bulletH);
+	loadImageArr(23, 23, 0, 0, thrusterW, thrusterH);
+	loadImageArr(24, 29, 0, 0, playerW, playerH);
+	loadImageArr(30, 30, 0, 0, asteroidW, asteroidH);
+	loadImageArr(31, 32, 0, 0, blastW, blastH);
+	loadImageArr(33, 33, 0, 0, stationW, stationH);
+}
+
+//initialize stars array
+void initstars() {
+	for (int i = 0; i < noOfStars; i += 2) {
+		starsArr[i] = randomInt(0, WIDTH);
+		starsArr[i + 1] = randomInt(0, HEIGHT);
+	}
+}
+
+//show stars array
+void showStars(){
+	for (int i = 0; i < noOfStars; i += 2) {
+		putpixel(starsArr[i], starsArr[i+1], WHITE);
+	}
+}
+
+//move stars array
+void moveStars() {
+	for (int i = 0; i < noOfStars; i += 2) {
+		starsArr[i] -= 10;
+		if (starsArr[i] < 0) {
+			starsArr[i] = WIDTH;
+			starsArr[i + 1] = randomInt(0, HEIGHT);
+		}
+	}
+}

@@ -1,0 +1,145 @@
+struct IMAGE {
+	int x1, y1, x2, y2, w, h;
+	void *imgPtr;
+	void init(int X1, int Y1, int X2, int Y2) {
+		x1 = X1;
+		y1 = Y1;
+		x2 = X2;
+		y2 = Y2;
+		w = X2 - X1;
+		h = Y2 - Y1;
+	}
+};
+
+IMAGE *images = (IMAGE*)malloc(33 * sizeof(IMAGE));
+
+IMAGE &cover		=	images[0];
+IMAGE &help			=	images[1];
+IMAGE &about		=	images[2];
+IMAGE &win			=	images[3];
+IMAGE &lose			=	images[4];
+IMAGE &startd		=	images[5];
+IMAGE &starth		=	images[6];
+IMAGE &helpd		=	images[7];
+IMAGE &helph		=	images[8];
+IMAGE &aboutd		=	images[9];
+IMAGE &abouth		=	images[10];
+IMAGE &quitd		=	images[11];
+IMAGE &quith		=	images[12];
+IMAGE &backd		=	images[13];
+IMAGE &backh		=	images[14];
+IMAGE &fireB1		=	images[15];
+IMAGE &fireP1		=	images[16];
+IMAGE &fireG1		=	images[17];
+IMAGE &fireB2		=	images[18];
+IMAGE &fireR2		=	images[19];
+IMAGE &fireG2		=	images[20];
+IMAGE &thrust1		=	images[21];
+IMAGE &thrust2		=	images[22];
+IMAGE &thrust3		=	images[23];
+IMAGE &player1		=	images[24];
+IMAGE &player2		=	images[25];
+IMAGE &player3		=	images[26];
+IMAGE &player4		=	images[27];
+IMAGE &player5		=	images[28];
+IMAGE &player6		=	images[29];
+IMAGE &asteroid		=	images[30];
+IMAGE &blast1		=	images[31];
+IMAGE &blast2		=	images[32];
+IMAGE &spaceFuel	=	images[33];
+
+void initImages();
+void printImages();
+void loadImageArr(int start, int end, int x, int y, int w, int h);
+void loadImage(char *file, IMAGE *image, int x, int y, int w, int h);
+void putImageArr(int start, int end);
+void putImage(IMAGE *image, int MODE);
+void translateArr(int start, int end, int dx, int dy);
+void translate(IMAGE * img, int dx, int dy);
+void Loader(int x, int y, int times, int d, IMAGE *img);
+
+//function for initializing struct IMAGE object
+void initImages() {
+	for (int i = 0; i < 26; i++) {
+		images[i].x1 = 0;
+		images[i].y1 = 0;
+		images[i].x2 = 0;
+		images[i].y2 = 0;
+		images[i].w = 0;
+		images[i].h = 0;
+		images[i].imgPtr = 0;
+	}
+}
+
+//function for printing members of struct IMAGE
+void printImages() {
+	printf("\n------------------------------------------------------------\n");
+	for (int i = 0; i < 26; i++) {
+		printf("%d:\t", i);
+		printf("x1 -> %d\t", images[i].x1);
+		printf("y1 -> %d\t", images[i].y1);
+		printf("x2 -> %d\t", images[i].x2);
+		printf("y2 -> %d\t", images[i].y2);
+		printf("w -> %d\t", images[i].w);
+		printf("h -> %d\n", images[i].h);
+	}
+	printf("\n------------------------------------------------------------\n");
+}
+
+//function for initilizing IMAGE objects array with specified w, h and from index start to index end
+void loadImageArr(int start, int end, int x, int y, int w, int h) {
+	char name[100];
+	for (int i = start; i <= end; i++) {
+//		swapbuffers();
+//		cleardevice();
+//		printf("%d.jpg loaded\n", i);
+		sprintf(name, "images/%d.jpg", i);
+		loadImage(name, &images[i], x, y, w, h);
+	}
+	swapbuffers();
+	cleardevice();
+}
+
+//function for initilizing one IMAGE object  with given w, h starting at x, y coordinates
+void loadImage(char *file, IMAGE *image, int x, int y, int w, int h) {
+	int size = imagesize(x, y, w, h);
+	image->x1 = x, image->y1 = y;
+	image->x2 = x + w, image->y2 = y + h;
+	image->w = w, image->h = h;
+	readimagefile(file, x, y, w, h);
+	image->imgPtr = malloc(size);
+	getimage(x, y, w, h, image->imgPtr);
+	cleardevice();
+}
+
+//function for displaying IMAGE object on screen
+void putImageArr(int start, int end) {
+	for (int i = start; i <= end; i++) {
+		swapbuffers();
+		cleardevice();
+//		printf("%d.jpg putted\n", i);
+		putImage(&images[i], COPY_PUT);
+	}
+	swapbuffers();
+	cleardevice();
+}
+
+//function for displaying one IMAGE object on screen
+void putImage(IMAGE *image, int MODE) {
+	putimage(image->x1, image->y1, image->imgPtr, MODE);
+}
+
+//function for moving IMAGE objects
+void translateArr(int start, int end, int dx, int dy) {
+	for (int i = start; i < end; i++) {
+		translate(&images[i], dx, dy);
+	}
+}
+
+//function for moving one IMAGE object
+void translate(IMAGE * img, int dx, int dy) {
+	img->x1 += dx;
+	img->y1 += dy;
+	img->x2 += dx;
+	img->y2 += dy;
+}

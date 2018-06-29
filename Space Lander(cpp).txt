@@ -1,0 +1,64 @@
+//Built-in Header Files
+#include <stdio.h>
+#include <stdlib.h>
+#include <process.h>
+#include <conio.h>
+#include <time.h>
+#include <math.h>
+#include <windows.h>
+#include "graphics.h"
+
+//User-Defined Header Files
+#include "gameobject.h"
+#include "Image.h"
+#include "MountainCollision.h"
+#include "MountainPhysics.h"
+#include "SpacePart.h"
+#include "POINT2D.h"
+#include "Animation.h"
+#include "Intro.h"
+
+//Multithreaded function for Songs
+#pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "Winmm.lib")
+
+//Plays Song
+void song(void *param);
+
+int main(){
+	initwindow(WIDTH, HEIGHT, "Space Lander");
+	HANDLE songHandle = (HANDLE)_beginthread(song, 0, 0);
+	setactivepage(0);
+	setvisualpage(1);
+	Intro();
+	getch();
+	return 0;
+}
+
+void song(void *param) {
+//	0 -> faded;
+//	1 -> force;
+//	2 -> music
+	time_t time1, time2;
+	int duration = 4 * 60;
+	int totalSongs = 3;
+	int songNo = 0;
+	char songTitle[20];
+
+	time(&time1);
+	time2 = time1 + duration;
+
+	while (1) {
+		if ((time2 - time1) != duration) {
+			time(&time2);
+		}
+		else {
+			songNo++;
+			if (songNo >= totalSongs)songNo = 0;
+			sprintf(songTitle, "music/%d.wav", songNo);
+			PlaySound(songTitle, GetModuleHandle(NULL), SND_FILENAME | SND_ASYNC);
+			time(&time1), time(&time2);
+		}
+	}
+	_endthread();
+}

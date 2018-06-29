@@ -1,0 +1,38 @@
+struct POINT2D {
+	float x, y;
+	int r, clicked;
+
+	void init(float X, float Y, int R) {
+		x = X;
+		y = Y;
+		r = R;
+		clicked = 0;
+	}
+
+	void print() {
+		printf("x -> %f\t", x);
+		printf("y -> %f\t", y);
+		printf("\n-----------------------------------------------------------------------------------------\n");
+	}
+
+	void draw() {
+		fillellipse(x, y, r, r);
+	}
+
+	void translate(float dx, float dy) {
+		x += dx;
+		y += dy;
+	}
+
+	int within(POINT2D mouse) {
+		float dx = x - mouse.x;
+		float dy = y - mouse.y;
+		float dist = sqrt(dx*dx + dy*dy);
+		printf("dist -> %f\n", dist);
+		if (dist <= r) {
+			printf("Within\n");
+			return 1;
+		}
+		return 0;
+	}
+};
